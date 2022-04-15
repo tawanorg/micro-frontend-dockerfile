@@ -1,0 +1,71 @@
+version: '3.4'
+
+services:
+  api:
+    container_name: api
+    build:
+      context: ./api
+      dockerfile: Dockerfile.api
+      args:
+        NODE_ENV: "development"
+    depends_on:
+      - db
+    ports:
+      - "3333:3333"
+    tty: true
+    environment:
+      NODE_ENV: "development"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+    volumes:
+      - ./api:/app
+   
+  web:
+    container_name: web
+    build:
+      context: ./web
+      dockerfile: ../Dockerfile.web
+      args:
+        NODE_ENV: "development"
+    depends_on:
+      - db
+    ports:
+      - "4200:4200"
+    tty: true
+    environment:
+      NODE_ENV: "development"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      API_HOST: "api:3333"
+    volumes:
+      - ./web:/app
+
+  db:
+    image: postgres
+    container_name: db
+    command: postgres -c logging_collector=on -c log_destination=stderr -c log_directory=/logs
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ././logs:/logs
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    ports:
+      - "16543:80"
+    depends_on:
+      - db
+
+volumes:
+  db:
+  pgadmin:
